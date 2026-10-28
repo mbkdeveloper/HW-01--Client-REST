@@ -1,0 +1,211 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+      <!-- Fil d'ariane / retour -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a routerLink="/produits" class="text-decoration-none text-primary">
+              <i class="bi bi-arrow-left me-1"></i>Catalogue
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ isEditMode ? 'Modifier Produit #' + produitId : 'Nouveau Produit' }}
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Carte du Formulaire -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h4 class="h5 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="bi" [class.bi-plus-circle-fill]="!isEditMode" [class.bi-pencil-square]="isEditMode" [class.text-primary]="!isEditMode" [class.text-warning]="isEditMode"></i>
+            <span>{{ isEditMode ? 'Modifier le Produit' : 'Ajouter un Nouveau Produit' }}</span>
+          </h4>
+          <span class="badge" [class.bg-info]="activeFormat === 'JSON'" [class.bg-warning]="activeFormat === 'XML'" [class.text-dark]="activeFormat === 'XML'">
+            Mode {{ activeFormat }}
+          </span>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Messages -->
+          @if (successMessage) {
+            <div class="alert alert-success d-flex align-items-center gap-2 mb-4" role="alert">
+              <i class="bi bi-check-circle-fill fs-5"></i>
+              <div>{{ successMessage }} Redirection en cours...</div>
+            </div>
+          }
+
+          @if (errorMessage) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+              <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+              <div>{{ errorMessage }}</div>
+            </div>
+          }
+
+          @if (loading) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <div class="mt-2 text-muted small">Chargement des données du produit...</div>
+            </div>
+          } @else {
+            <form [formGroup]="produitForm" (ngSubmit)="onSubmit()" novalidate>
+              <div class="row g-3">
+                <!-- Désignation -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold" for="designation">
+                    Désignation du produit <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="designation"
+                    class="form-control"
+                    formControlName="designation"
+                    placeholder="Ex: Ordinateur Portable, Yahourt..."
+                    [class.is-invalid]="f['designation'].touched && f['designation'].invalid"
+                  />
+                  @if (f['designation'].touched && f['designation'].invalid) {
+                    <div class="invalid-feedback">
+                      @if (f['designation'].errors?.['required']) {
+                        La désignation est obligatoire.
+                      }
+                      @if (f['designation'].errors?.['minlength']) {
+                        La désignation doit contenir au moins 3 caractères.
+                      }
+                      @if (f['designation'].errors?.['maxlength']) {
+                        La désignation ne peut dépasser 50 caractères.
+                      }
+                    </div>
+                  }
+                  <div class="form-text small text-muted">Contrainte Spring Boot : Entre 3 et 50 caractères.</div>
+                </div>
+
+                <!-- Prix & Quantité -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold" for="prix">
+                    Prix unitaire (DT) <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      id="prix"
+                      step="0.001"
+                      class="form-control"
+                      formControlName="prix"
+                      placeholder="0.000"
+                      [class.is-invalid]="f['prix'].touched && f['prix'].invalid"
+                    />
+                    <span class="input-group-text">DT</span>
+                    @if (f['prix'].touched && f['prix'].invalid) {
+                      <div class="invalid-feedback">
+                        @if (f['prix'].errors?.['required']) {
+                          Le prix est obligatoire.
+                        }
+                        @if (f['prix'].errors?.['min']) {
+                          Le prix minimum autorisé est 0.1 DT.
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold" for="quantite">
+                    Quantité en stock <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="quantite"
+                    class="form-control"
+                    formControlName="quantite"
+                    placeholder="0"
+                    [class.is-invalid]="f['quantite'].touched && f['quantite'].invalid"
+                  />
+                  @if (f['quantite'].touched && f['quantite'].invalid) {
+                    <div class="invalid-feedback">
+                      @if (f['quantite'].errors?.['required']) {
+                        La quantité est obligatoire.
+                      }
+                      @if (f['quantite'].errors?.['min']) {
+                        La quantité ne peut pas être négative.
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Date d'achat & Catégorie -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold" for="dateAchat">
+                    Date d'achat <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="dateAchat"
+                    class="form-control"
+                    formControlName="dateAchat"
+                    [class.is-invalid]="f['dateAchat'].touched && f['dateAchat'].invalid"
+                  />
+                  @if (f['dateAchat'].touched && f['dateAchat'].invalid) {
+                    <div class="invalid-feedback">
+                      La date d'achat est requise.
+                    </div>
+                  }
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold" for="categorieCode">
+                    Catégorie
+                  </label>
+                  <select id="categorieCode" class="form-select" formControlName="categorieCode">
+                    @for (cat of categoriesPredefinies; track cat.code) {
+                      <option [value]="cat.code">
+                        {{ cat.libelle }} (Code: {{ cat.code }})
+                      </option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Statut Actif -->
+                <div class="col-12 mt-3">
+                  <div class="form-check form-switch p-2 bg-light rounded border">
+                    <input
+                      class="form-check-input ms-0 me-3"
+                      type="checkbox"
+                      id="actifSwitch"
+                      formControlName="actif"
+                    />
+                    <label class="form-check-label fw-semibold" for="actifSwitch">
+                      Produit actif (disponible à la vente)
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="col-12 d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                  <a routerLink="/produits" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Annuler
+                  </a>
+                  <button
+                    type="submit"
+                    class="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+                    [disabled]="produitForm.invalid || saving"
+                  >
+                    @if (saving) {
+                      <span class="spinner-border spinner-border-sm" role="status"></span>
+                      <span>Enregistrement...</span>
+                    } @else {
+                      <i class="bi" [class.bi-check-lg]="!isEditMode" [class.bi-save]="isEditMode"></i>
+                      <span>{{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }}</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
