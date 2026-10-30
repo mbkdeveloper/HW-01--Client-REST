@@ -22,8 +22,8 @@
             <i class="bi" [class.bi-plus-circle-fill]="!isEditMode" [class.bi-pencil-square]="isEditMode" [class.text-primary]="!isEditMode" [class.text-warning]="isEditMode"></i>
             <span>{{ isEditMode ? 'Modifier le Produit' : 'Ajouter un Nouveau Produit' }}</span>
           </h4>
-          <span class="badge" [class.bg-info]="activeFormat === 'JSON'" [class.bg-warning]="activeFormat === 'XML'" [class.text-dark]="activeFormat === 'XML'">
-            Mode {{ activeFormat }}
+          <span class="badge bg-warning text-dark">
+            <i class="bi bi-filetype-xml me-1"></i>Format XML
           </span>
         </div>
 

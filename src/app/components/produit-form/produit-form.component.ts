@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { Produit } from '../../models/produit.model';
 import { Categorie } from '../../models/categorie.model';
-import { ProduitService, DataFormat } from '../../services/produit.service';
+import { ProduitService } from '../../services/produit.service';
 
 @Component({
   selector: 'app-produit-form',
@@ -21,7 +21,6 @@ export class ProduitFormComponent implements OnInit {
   saving = false;
   errorMessage = '';
   successMessage = '';
-  activeFormat: DataFormat = 'JSON';
 
   // Catégories prédéfinies basées sur l'initialisation Spring Boot
   categoriesPredefinies: Categorie[] = [
@@ -40,7 +39,6 @@ export class ProduitFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.activeFormat = this.produitService.currentFormat;
     this.initForm();
 
     // Vérifier si un ID est présent dans l'URL pour le mode édition
@@ -71,7 +69,7 @@ export class ProduitFormComponent implements OnInit {
   }
 
   /**
-   * Charge les données d'un produit existant pour modification
+   * Charge les données d'un produit existant via GET /produits/{id} en XML
    */
   private loadProduit(id: number): void {
     this.loading = true;
@@ -109,7 +107,7 @@ export class ProduitFormComponent implements OnInit {
   }
 
   /**
-   * Soumission du formulaire (Ajout ou Modification)
+   * Soumission du formulaire (Ajout ou Modification) en envoyant du XML
    */
   onSubmit(): void {
     if (this.produitForm.invalid) {

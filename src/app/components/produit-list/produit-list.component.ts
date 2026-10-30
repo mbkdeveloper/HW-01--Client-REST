@@ -1,10 +1,9 @@
-import { Component, OnInit, OnDestroy, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
 import { Produit } from '../../models/produit.model';
-import { ProduitService, DataFormat } from '../../services/produit.service';
+import { ProduitService } from '../../services/produit.service';
 
 @Component({
   selector: 'app-produit-list',
@@ -13,7 +12,7 @@ import { ProduitService, DataFormat } from '../../services/produit.service';
   templateUrl: './produit-list.component.html',
   styleUrls: ['./produit-list.component.scss']
 })
-export class ProduitListComponent implements OnInit, OnDestroy {
+export class ProduitListComponent implements OnInit {
   produits: Produit[] = [];
   filteredProduits: Produit[] = [];
   
@@ -25,36 +24,23 @@ export class ProduitListComponent implements OnInit, OnDestroy {
   loading = false;
   errorMessage = '';
   successMessage = '';
-  activeFormat: DataFormat = 'JSON';
 
   // Produit sélectionné pour confirmation de suppression
   produitToDelete: Produit | null = null;
   deleting = false;
 
-  private formatSub!: Subscription;
   private platformId = inject(PLATFORM_ID);
 
   constructor(private produitService: ProduitService) {}
 
   ngOnInit(): void {
-    this.activeFormat = this.produitService.currentFormat;
-    // Si l'utilisateur bascule de format dans la navbar, recharger automatiquement la liste avec ce format
-    this.formatSub = this.produitService.currentFormat$.subscribe((format) => {
-      this.activeFormat = format;
-      if (isPlatformBrowser(this.platformId)) {
-        this.loadProduits();
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.formatSub) {
-      this.formatSub.unsubscribe();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadProduits();
     }
   }
 
   /**
-   * Charge la liste des produits depuis le backend Spring Boot
+   * Charge la liste des produits depuis le backend Spring Boot en XML
    */
   loadProduits(): void {
     if (!isPlatformBrowser(this.platformId)) return;

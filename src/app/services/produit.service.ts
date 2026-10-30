@@ -1,34 +1,27 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject, map, catchError } from 'rxjs';
+import { Observable, throwError, map, catchError } from 'rxjs';
 import { Produit } from '../models/produit.model';
 import { XmlUtils } from './xml-utils';
-
-export type DataFormat = 'JSON' | 'XML';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProduitService {
-  // En passant par le proxy configuré dans proxy.conf.json avec /api, aucune collision avec les routes de navigation du frontend
+  // En passant par le proxy configuré dans proxy.conf.json avec /api
   private readonly baseUrl = '/api/produits';
 
-  // Format actif (JSON ou XML)
-  private currentFormatSubject = new BehaviorSubject<DataFormat>('JSON');
-  public currentFormat$ = this.currentFormatSubject.asObservable();
+  // Headers XML par défaut pour toutes les requêtes
+  private readonly xmlHeaders = new HttpHeaders({
+    'Accept': 'application/xml, text/xml'
+  });
+
+  private readonly xmlPostHeaders = new HttpHeaders({
+    'Content-Type': 'application/xml',
+    'Accept': 'application/xml, text/xml'
+  });
 
   constructor(private http: HttpClient) {}
-
-  /**
-   * Change le format utilisé pour les requêtes et réponses
-   */
-  public setFormat(format: DataFormat): void {
-    this.currentFormatSubject.next(format);
-  }
-
-  public get currentFormat(): DataFormat {
-    return this.currentFormatSubject.value;
-  }
 
   /**
    * Teste la connexion à l'API Spring Boot via /produits/index
@@ -40,150 +33,75 @@ export class ProduitService {
   }
 
   /**
-   * Récupère tous les produits (compatible JSON et XML)
+   * Récupère tous les produits au format XML depuis Spring Boot Jackson XML
    */
   public getProduits(): Observable<Produit[]> {
-    const format = this.currentFormat;
-    const headers = new HttpHeaders({
-      'Accept': format === 'XML' ? 'application/xml, text/xml' : 'application/json'
-    });
-
-    if (format === 'XML') {
-      return this.http.get(`${this.baseUrl}/`, { headers, responseType: 'text' }).pipe(
-        map((xmlText) => XmlUtils.parseProduitsList(xmlText)),
-        catchError(this.handleError)
-      );
-    } else {
-      return this.http.get<any>(`${this.baseUrl}/`, { headers }).pipe(
-        map((data: any) => {
-          if (typeof data === 'string' && (data as string).trim().startsWith('<')) {
-            return XmlUtils.parseProduitsList(data);
-          }
-          if (Array.isArray(data)) {
-            return data.map(item => this.mapToProduit(item));
-          }
-          return [];
-        }),
-        catchError(this.handleError)
-      );
-    }
-  }
-
-  /**
-   * Récupère un produit par son ID (compatible JSON et XML)
-   */
-  public getProduit(id: number): Observable<Produit> {
-    const format = this.currentFormat;
-    const headers = new HttpHeaders({
-      'Accept': format === 'XML' ? 'application/xml, text/xml' : 'application/json'
-    });
-
-    if (format === 'XML') {
-      return this.http.get(`${this.baseUrl}/${id}`, { headers, responseType: 'text' }).pipe(
-        map((xmlText) => XmlUtils.parseSingleProduit(xmlText)),
-        catchError(this.handleError)
-      );
-    } else {
-      return this.http.get<any>(`${this.baseUrl}/${id}`, { headers }).pipe(
-        map((item: any) => {
-          if (typeof item === 'string' && (item as string).trim().startsWith('<')) {
-            return XmlUtils.parseSingleProduit(item);
-          }
-          return this.mapToProduit(item);
-        }),
-        catchError(this.handleError)
-      );
-    }
-  }
-
-  /**
-   * Ajoute un produit (compatible POST avec payload JSON ou XML)
-   */
-  public saveProduit(produit: Produit): Observable<Produit> {
-    const format = this.currentFormat;
-
-    if (format === 'XML') {
-      const headers = new HttpHeaders({
-        'Content-Type': 'application/xml',
-        'Accept': 'application/xml, application/json'
-      });
-      const xmlBody = XmlUtils.produitToXml(produit);
-
-      return this.http.post(`${this.baseUrl}/`, xmlBody, { headers, responseType: 'text' }).pipe(
-        map((resText) => {
-          if (resText.trim().startsWith('<')) {
-            return XmlUtils.parseSingleProduit(resText);
-          }
-          try {
-            return this.mapToProduit(JSON.parse(resText));
-          } catch {
-            return produit;
-          }
-        }),
-        catchError(this.handleError)
-      );
-    } else {
-      const headers = new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      });
-      return this.http.post<any>(`${this.baseUrl}/`, produit, { headers }).pipe(
-        map((res) => this.mapToProduit(res)),
-        catchError(this.handleError)
-      );
-    }
-  }
-
-  /**
-   * Modifie un produit (compatible PUT avec payload JSON ou XML)
-   */
-  public updateProduit(produit: Produit): Observable<Produit> {
-    const format = this.currentFormat;
-
-    if (format === 'XML') {
-      const headers = new HttpHeaders({
-        'Content-Type': 'application/xml',
-        'Accept': 'application/xml, application/json'
-      });
-      const xmlBody = XmlUtils.produitToXml(produit);
-
-      return this.http.put(`${this.baseUrl}/`, xmlBody, { headers, responseType: 'text' }).pipe(
-        map((resText) => {
-          if (resText.trim().startsWith('<')) {
-            return XmlUtils.parseSingleProduit(resText);
-          }
-          try {
-            return this.mapToProduit(JSON.parse(resText));
-          } catch {
-            return produit;
-          }
-        }),
-        catchError(this.handleError)
-      );
-    } else {
-      const headers = new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      });
-      return this.http.put<any>(`${this.baseUrl}/`, produit, { headers }).pipe(
-        map((res) => this.mapToProduit(res)),
-        catchError(this.handleError)
-      );
-    }
-  }
-
-  /**
-   * Supprime un produit par son ID.
-   * Utilise le endpoint GET /produits/delete/{id} défini dans ProduitRESTController.
-   */
-  public deleteProduit(id: number): Observable<void> {
-    return this.http.get<void>(`${this.baseUrl}/delete/${id}`).pipe(
+    return this.http.get(`${this.baseUrl}/`, {
+      headers: this.xmlHeaders,
+      responseType: 'text'
+    }).pipe(
+      map((xmlText) => XmlUtils.parseProduitsList(xmlText)),
       catchError(this.handleError)
     );
   }
 
   /**
-   * Recherche par désignation
+   * Récupère un produit par son ID au format XML depuis Spring Boot Jackson XML
+   */
+  public getProduit(id: number): Observable<Produit> {
+    return this.http.get(`${this.baseUrl}/${id}`, {
+      headers: this.xmlHeaders,
+      responseType: 'text'
+    }).pipe(
+      map((xmlText) => XmlUtils.parseSingleProduit(xmlText)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Ajoute un nouveau produit en envoyant un payload XML à Spring Boot
+   * et en consommant la réponse XML retournée par Jackson
+   */
+  public saveProduit(produit: Produit): Observable<Produit> {
+    const xmlBody = XmlUtils.produitToXml(produit);
+
+    return this.http.post(`${this.baseUrl}/`, xmlBody, {
+      headers: this.xmlPostHeaders,
+      responseType: 'text'
+    }).pipe(
+      map((resXml) => XmlUtils.parseSingleProduit(resXml)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Modifie un produit existant en envoyant un payload XML à Spring Boot
+   * et en consommant la réponse XML retournée par Jackson
+   */
+  public updateProduit(produit: Produit): Observable<Produit> {
+    const xmlBody = XmlUtils.produitToXml(produit);
+
+    return this.http.put(`${this.baseUrl}/`, xmlBody, {
+      headers: this.xmlPostHeaders,
+      responseType: 'text'
+    }).pipe(
+      map((resXml) => XmlUtils.parseSingleProduit(resXml)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Supprime un produit par son ID via GET /produits/delete/{id}
+   */
+  public deleteProduit(id: number): Observable<void> {
+    return this.http.get(`${this.baseUrl}/delete/${id}`, { responseType: 'text' }).pipe(
+      map(() => void 0),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Recherche par désignation parmi les produits récupérés en XML
    */
   public searchByDesignation(keyword: string): Observable<Produit[]> {
     return this.getProduits().pipe(
@@ -196,32 +114,15 @@ export class ProduitService {
   }
 
   /**
-   * Convertit un objet brut reçu en instance de Produit
-   */
-  private mapToProduit(item: any): Produit {
-    return new Produit(
-      item.id,
-      item.designation,
-      item.prix,
-      item.quantite,
-      item.actif,
-      item.dateAchat,
-      item.categorie
-    );
-  }
-
-  /**
    * Gestion centralisée des erreurs HTTP
    */
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Une erreur inattendue est survenue.';
     if (error.error instanceof ErrorEvent) {
-      // Erreur côté client ou réseau
       errorMessage = `Erreur réseau : ${error.error.message}`;
     } else {
-      // Erreur renvoyée par le backend Spring Boot
       if (error.status === 0) {
-        errorMessage = 'Impossible de contacter le serveur Spring Boot. Vérifiez que le backend et XAMPP (MySQL) sont bien démarrés sur le port 8080.';
+        errorMessage = 'Impossible de contacter le serveur Spring Boot. Vérifiez que le backend et MySQL sont bien démarrés sur le port 8080.';
       } else {
         errorMessage = `Erreur serveur (${error.status}) : ${error.statusText || ''} - ${error.error?.message || error.message || ''}`;
       }

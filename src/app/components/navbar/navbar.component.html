@@ -14,24 +14,25 @@
 
     <!-- Navigation links & actions -->
     <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/produits" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <i class="bi bi-list-ul me-1"></i>Catalogue
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/produits/nouveau" routerLinkActive="active">
+            <i class="bi bi-plus-circle me-1"></i>Nouveau Produit
+          </a>
+        </li>
+      </ul>
 
-      <!-- Format selector (JSON / XML) and API health indicator -->
-      <div class="d-flex align-items-center flex-wrap gap-3 ms-auto">
-        <!-- Sélecteur de format JSON / XML -->
-        <div
-          class="format-toggle d-flex align-items-center bg-white bg-opacity-10 rounded-pill p-1 border border-light border-opacity-25">
-          <span class="text-white-50 small px-2 fw-semibold">Format :</span>
-          <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all"
-            [class.btn-light]="currentFormat === 'JSON'" [class.btn-outline-light]="currentFormat !== 'JSON'"
-            (click)="toggleFormat('JSON')">
-            <i class="bi bi-braces me-1"></i>JSON
-          </button>
-          <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all ms-1"
-            [class.btn-warning]="currentFormat === 'XML'" [class.text-dark]="currentFormat === 'XML'"
-            [class.btn-outline-light]="currentFormat !== 'XML'" (click)="toggleFormat('XML')">
-            <i class="bi bi-code-slash me-1"></i>XML
-          </button>
-        </div>
+      <!-- Indicateur de communication XML Jackson -->
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-1">
+          <i class="bi bi-filetype-xml fs-6"></i>
+          <span>Client REST XML (Jackson)</span>
+        </span>
       </div>
     </div>
   </div>
