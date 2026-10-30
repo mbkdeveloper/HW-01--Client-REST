@@ -5,35 +5,5 @@
       <i class="bi bi-box-seam-fill fs-4"></i>
       <span>Gestion des Produits</span>
     </a>
-
-    <!-- Mobile Toggler -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <!-- Navigation links & actions -->
-    <div class="collapse navbar-collapse" id="navbarContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/produits" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-            <i class="bi bi-list-ul me-1"></i>Catalogue
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/produits/nouveau" routerLinkActive="active">
-            <i class="bi bi-plus-circle me-1"></i>Nouveau Produit
-          </a>
-        </li>
-      </ul>
-
-      <!-- Indicateur de communication XML Jackson -->
-      <div class="d-flex align-items-center gap-2 ms-auto">
-        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-1">
-          <i class="bi bi-filetype-xml fs-6"></i>
-          <span>Client REST XML (Jackson)</span>
-        </span>
-      </div>
-    </div>
   </div>
 </nav>
